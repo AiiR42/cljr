@@ -1,2 +1,8 @@
 /target
 /resources/public/js/cljs.js
+pom.xml
+*jar
+/lib/
+/classes/
+/targets/
+.lein-deps-sum
