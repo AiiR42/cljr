@@ -7,6 +7,17 @@
 (defn is-output? [selector]
   true) ;; TODO fix it
 
+(defn get-cookie [cookie-name]
+  (let [parts (.split (.-cookie js/document) (str cookie-name "="))]
+    (if (= (.-length parts) 2)
+      (.shift (.split (.pop parts) ";")))))
+
+(defn init-cookie [cell cookie-name]
+  (r/set-outfunc cell 
+                 #(set! 
+                   (.-cookie js/document)
+                   (str cookie-name "=" %))))
+
 (defn init-button [cell selector]
   (set! 
     (.-onclick 
