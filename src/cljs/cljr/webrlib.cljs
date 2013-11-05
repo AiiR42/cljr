@@ -13,29 +13,29 @@
       (.shift (.split (.pop parts) ";")))))
 
 (defn init-cookie [cell cookie-name]
-  (r/set-outfunc cell 
+  (r/set-setter cell 
                  #(set! 
                    (.-cookie js/document)
                    (str cookie-name "=" %))))
 
 (defn init-button [cell selector]
+  ;;(r/set-rel cell #() [])
   (set! 
     (.-onclick 
       (.getElementById js/document selector)) 
-    (fn [] 
-      (r/set-val cell true)
-      (r/set-val cell false))))
+    #(r/update cell)))
 
 (defn init [cell selector input output] ;; TODO fix to use real selectors
   (if (and output (is-output? selector))
-    (r/set-outfunc cell 
+    (r/set-setter cell 
                    #(set! 
                      (.-value 
                        (.getElementById js/document selector))
                      %)))
   (if (and input (is-input? selector))
-    (set! 
-      (.-onkeyup 
-        (.getElementById js/document selector)) 
-      #(r/set-val cell 
-        (str (.-value (.getElementById js/document selector)))))))
+    (do
+      (r/set-rel cell #(str (.-value (.getElementById js/document selector))) [])
+      (set! 
+        (.-onkeyup 
+          (.getElementById js/document selector)) 
+        #(r/update cell)))))

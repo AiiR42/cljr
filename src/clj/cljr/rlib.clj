@@ -6,7 +6,7 @@
      :value (atom nil) ;; remove value while adding caching
      :function (atom nil)
      :args (atom nil)
-     :view-function (atom nil)
+     :set-function (atom nil)
      :relations (atom '())}))
 
 (defn get-value [cell]
@@ -18,10 +18,10 @@
   (if (not (nil? @(:function cell)))
     (do 
       (doall (map update @(:relations cell)))
-      (@(:view-function cell) (apply @(:function cell) (map get-value @(:args cell)))))))
+      (@(:set-function cell) (apply @(:function cell) (map get-value @(:args cell)))))))
 
-(defn set-outfunc [cell view-function]
-  (reset! (:view-function cell) view-function))
+(defn set-setter [cell set-function]
+  (reset! (:set-function cell) set-function))
 
 (defn set-val [cell value]
   (if (nil? @(:function cell))

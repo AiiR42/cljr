@@ -1,27 +1,16 @@
 (ns cljr.rlib)
 
 (defn get-value [cell]
-  (if (not (nil? @(:function cell)))
-    (apply @(:function cell) (map get-value @(:args cell)))
-    @(:value cell)))
+  (apply @(:function cell) (map get-value @(:args cell))))
 
 (defn update [cell]
-  (if (not (nil? @(:function cell)))
-    (do 
-      (doall (map update @(:relations cell)))
-      (let [value (apply @(:function cell) (map get-value @(:args cell)))]
-        (if-not (nil? value)
-          (@(:view-function cell) value))))))
+  (doall (map update @(:relations cell)))
+  (let [value (apply @(:function cell) (map get-value @(:args cell)))]
+    (if-not (nil? value)
+      (@(:set-function cell) value))))
 
-(defn set-outfunc [cell view-function]
-  (reset! (:view-function cell) view-function))
-
-(defn set-val [cell value]
-  (if (nil? @(:function cell))
-    (do
-      (reset! (:value cell) value)
-      (doall (map update @(:relations cell)))
-      nil)))
+(defn set-setter [cell set-function]
+  (reset! (:set-function cell) set-function))
 
 (defn set-rel [cell func args]
   (reset! (:function cell) func)
