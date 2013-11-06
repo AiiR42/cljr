@@ -18,12 +18,18 @@
                    (.-cookie js/document)
                    (str cookie-name "=" %))))
 
-(defn init-button [cell selector]
-  ;;(r/set-rel cell #() [])
-  (set! 
-    (.-onclick 
-      (.getElementById js/document selector)) 
-    #(r/update cell)))
+(defn init-button [cell selector] ;; TODO fix it when event streams will be added
+  (let [element (.getElementById js/document selector)]
+    (r/set-rel cell (fn [] (#{"true"} (.getAttribute (.getElementById js/document selector) "state"))) [])
+    (.setAttribute element "state" "false")
+    (set! 
+      (.-onmousedown element) 
+      #(.setAttribute element "state" "true"))
+    (set! 
+      (.-onmouseup element) 
+      (fn [] 
+        (r/update cell)
+        (.setAttribute element "state" "false")))))
 
 (defn init [cell selector input output] ;; TODO fix to use real selectors
   (if (and output (is-output? selector))

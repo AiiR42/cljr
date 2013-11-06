@@ -6,7 +6,7 @@
 (defn update [cell]
   (doall (map update @(:relations cell)))
   (let [value (apply @(:function cell) (map get-value @(:args cell)))]
-    (if-not (nil? value)
+    (if-not (or (nil? value) (nil? @(:set-function cell)))
       (@(:set-function cell) value))))
 
 (defn set-setter [cell set-function]
