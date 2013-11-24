@@ -3,19 +3,13 @@
             [cljr.webrlib :as wr]
             [enfocus.core :as ef])
   (:require-macros [enfocus.macros :as em])
-  (:use-macros [cljr.rlibm :only [defv]]))
+  (:use-macros [cljr.rlibm :only [defsignal]]))
 
-; Relations
-
-(defv a)
-(defv b)
-(defv result)
-
-(r/set-rel result (fn [x y] (str (+ (js/parseInt x) (js/parseInt y)))) [a b])
- 
-; Implementation
+(defn plus-function [x y]
+  (str (+ (js/parseInt x) (js/parseInt y))))
 
 (defn init []
-  (wr/init a "plus1" true false)
-  (wr/init b "plus2" true false)
-  (wr/init result "plus-result" false true))
+  (let [a (wr/input-text-signal "plus1")
+        b (wr/input-text-signal "plus2")
+        result (wr/to-input-text (r/lift plus-function [a b]) "plus-result")]
+    nil))

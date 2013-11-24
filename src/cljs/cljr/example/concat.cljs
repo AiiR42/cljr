@@ -3,19 +3,10 @@
             [cljr.webrlib :as wr]
             [enfocus.core :as ef])
   (:require-macros [enfocus.macros :as em])
-  (:use-macros [cljr.rlibm :only [defv]]))
-
-; Relations
-
-(defv a)
-(defv b)
-(defv result)
-
-(r/set-rel result str [a b])
- 
-; Implementation
+  (:use-macros [cljr.rlibm :only [defsignal]]))
 
 (defn init []
-  (wr/init a "concat1" true false)
-  (wr/init b "concat2" true false)
-  (wr/init result "concat-result" false true))
+  (let [a (wr/input-text-signal "concat1")
+        b (wr/input-text-signal "concat2")
+        result (wr/to-input-text (r/lift str [a b]) "concat-result")]
+    nil))
