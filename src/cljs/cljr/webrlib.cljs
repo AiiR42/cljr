@@ -1,5 +1,6 @@
 (ns cljr.webrlib
-  (:require [cljr.rlib :as r]))
+  (:require [cljr.rlib :as r]
+            [cljr.util :as u]))
 
 ; (defn is-input? [selector]
 ;   true) ;; TODO fix it
@@ -46,9 +47,9 @@
 ;           (.getElementById js/document selector)) 
 ;         #(r/update cell)))))
 
-(defn input-text-signal [id] ;; string -> Signal a
+(defn input-text-signal [id & events] ;; string -> Signal a
   (let [signal (r/constant #(str (.-value (.getElementById js/document id))) 
-                           #(set! (.-value (.getElementById js/document id)) %))]
+                           #(set! (.-value (.getElementById js/document id)) %) (if (nil? events) [] events))]
     (set! (.-onkeyup 
             (.getElementById js/document id)) 
           #(r/update signal))
@@ -56,3 +57,16 @@
 
 (defn to-input-text [signal id]
   (r/to-view signal #(set! (.-value (.getElementById js/document id)) %)))
+
+(defn button-event [id]
+  (let [element (.getElementById js/document id)
+        event (r/create-event-stream u/id-func [] [] nil)]
+    (set!
+      (.-onclick element) 
+      #(r/propogate-event event true))
+    event))
+
+(defn set-value [id value]
+  (set! 
+    (.-value (.getElementById js/document id))
+    value))

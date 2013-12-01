@@ -10,6 +10,5 @@
 (defn init []
   (ex-concat/init)
   (ex-plus/init)
-  ;(ex-button/init))
-)
+  (ex-button/init))
 (set! (.-onload js/window) #(em/wait-for-load (init)))

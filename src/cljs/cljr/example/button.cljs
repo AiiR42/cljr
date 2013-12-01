@@ -5,19 +5,15 @@
   (:require-macros [enfocus.macros :as em])
   (:use-macros [cljr.rlibm :only [defsignal defevent]]))
 
-; Relations
-
-; (defsignal login)
-; (defsignal password)
-; (defsignal submit)
-; (defevent result)
-
-; (r/set-rel result (fn [login password submit] (if submit (if (= login password) "correct" "incorrect"))) [login password submit])
- 
-; ; Implementation
-
-; (defn init []
-;   (wr/init login "login" true false)
-;   (wr/init password "password" true false)
-;   (wr/init-button submit "login-button")
-;   (wr/init result "login-result" false true))
+(defn init []
+  (let [a (wr/input-text-signal "login")
+        b (wr/input-text-signal "password")
+        submit (wr/button-event "login-button")
+        result (wr/input-text-signal "login-result" 
+                 [(r/create-event-stream 
+                    (fn [login pass event]
+                      (if (= login pass) "correct" "incorrect")) 
+                    [a b] 
+                    [submit] 
+                    #(wr/set-value "login-result" %))])]
+    nil))
