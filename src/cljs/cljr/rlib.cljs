@@ -38,12 +38,12 @@
   (assoc signal :to-view to-view-function :relations (atom '())))
 
 (defn modify [signal apply-func] ;; Signal a -> (Signal a -> Signal a) -> Signal a
-  (let [new-signal (apply-func (create-signal (fn [a] a) [signal] []))]
+  (let [new-signal (apply-func (create-signal u/is-func [signal] []))]
     (add-relations new-signal [signal])
     new-signal))
 
 (defn id [signal] ;; Signal a -> Signal a
-  (let [new-signal (lift (fn [a] a) [signal] [])]
+  (let [new-signal (lift u/id-func [signal] [])]
     new-signal))
 
 (defn constant [from-view-func to-view-func events] ;; a -> Signal a
