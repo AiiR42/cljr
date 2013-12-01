@@ -2,12 +2,13 @@
   (:require [cljr.util :as u]))
 
 (defn create-signal [function signals events]
-  {:function function
-   :args signals
-   :to-view nil
-   :relations (atom '())
-   :signal? true
-   :events events})
+  (let [signal {:function function
+                :args signals
+                :to-view nil
+                :relations (atom '())
+                :signal? true}]
+    (add-relations signal events)
+    signal))
 
 (defn create-event-stream [function signals events do-func]
   (let [event {:function function
@@ -38,7 +39,7 @@
   (assoc signal :to-view to-view-function :relations (atom '())))
 
 (defn modify [signal apply-func] ;; Signal a -> (Signal a -> Signal a) -> Signal a
-  (let [new-signal (apply-func (create-signal u/is-func [signal] []))]
+  (let [new-signal (apply-func (create-signal u/id-func [signal] []))]
     (add-relations new-signal [signal])
     new-signal))
 
@@ -49,8 +50,8 @@
 (defn constant [from-view-func to-view-func events] ;; a -> Signal a
   (to-view-raw (create-signal from-view-func nil events) to-view-func))
 
-(defn lift [func signals events] ;; ([a] -> b) -> [Signal a] -> Signal b
-  (let [signal (create-signal func signals events)]
+(defn lift [func signals & [events]] ;; ([a] -> b) -> [Signal a] -> Signal b
+  (let [signal (create-signal func signals (if (= events nil) [] events))]
     (add-relations signal signals)
     signal))
 
@@ -66,5 +67,5 @@
   (let [value (apply (:function event-stream) (conj (vec (map get-value (:args event-stream))) data))]
     (if-not (nil? (:do event-stream))
       ((:do event-stream) value))
-    (doall (map #(propogate-event % value) @(:relations event-stream))))
+    (doall (map #(if (:event-stream? %) (propogate-event % value) (update %)) @(:relations event-stream))))
   nil)

@@ -8,10 +8,7 @@
 ; (defn is-output? [selector]
 ;   true) ;; TODO fix it
 
-; (defn get-cookie [cookie-name]
-;   (let [parts (.split (.-cookie js/document) (str cookie-name "="))]
-;     (if (= (.-length parts) 2)
-;       (.shift (.split (.pop parts) ";")))))
+
 
 ; (defn init-cookie [cell cookie-name]
 ;   (r/set-setter cell 
@@ -47,7 +44,22 @@
 ;           (.getElementById js/document selector)) 
 ;         #(r/update cell)))))
 
-(defn input-text-signal [id & events] ;; string -> Signal a
+(defn set-value [id value]
+  (set! 
+    (.-value (.getElementById js/document id))
+    value))
+
+(defn get-cookie [cookie-name]
+  (let [parts (.split (.-cookie js/document) (str cookie-name "="))]
+    (if (= (.-length parts) 2)
+      (.shift (.split (.pop parts) ";")))))
+
+(defn set-cookie [cookie-name value]
+  (set! 
+    (.-cookie js/document)
+    (str cookie-name "=" value)))
+
+(defn input-text-signal [id & [events]] ;; string -> Signal a
   (let [signal (r/constant #(str (.-value (.getElementById js/document id))) 
                            #(set! (.-value (.getElementById js/document id)) %) (if (nil? events) [] events))]
     (set! (.-onkeyup 
@@ -55,8 +67,16 @@
           #(r/update signal))
     signal))
 
+(defn inner-text-signal [id & [events]] ;; string -> Signal a
+  (let [signal (r/constant #(str (.-innerHTML (.getElementById js/document id))) 
+                           #(set! (.-innerHTML (.getElementById js/document id)) %) (if (nil? events) [] events))]
+    signal))
+
 (defn to-input-text [signal id]
   (r/to-view signal #(set! (.-value (.getElementById js/document id)) %)))
+
+(defn to-inner-text [signal id]
+  (r/to-view signal #(set! (.-innerHTML (.getElementById js/document id)) %)))
 
 (defn button-event [id]
   (let [element (.getElementById js/document id)
@@ -66,7 +86,5 @@
       #(r/propogate-event event true))
     event))
 
-(defn set-value [id value]
-  (set! 
-    (.-value (.getElementById js/document id))
-    value))
+(defn cookie-signal [cookie-name & [events]]
+  (r/to-view (r/create-signal #(get-cookie cookie-name) [] (if (nil? events) [] events)) #(set-cookie cookie-name %)))

@@ -1,9 +1,6 @@
 (ns cljr.example.concat
   (:require [cljr.rlib :as r]
-            [cljr.webrlib :as wr]
-            [enfocus.core :as ef])
-  (:require-macros [enfocus.macros :as em])
-  (:use-macros [cljr.rlibm :only [defsignal]]))
+            [cljr.webrlib :as wr]))
 
 (defn init []
   (let [a (wr/input-text-signal "concat1")
