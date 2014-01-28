@@ -69,3 +69,9 @@
       ((:do event-stream) value))
     (doall (map #(if (:event-stream? %) (propogate-event % value) (update %)) @(:relations event-stream))))
   nil)
+
+(defn event-to-signal [event]
+  (let [cache (atom nil)
+        cache-event (create-event-stream u/id [] [event] #(reset! cache %))
+        signal (create-signal (fn [] @cache) nil [event])]
+    signal))
