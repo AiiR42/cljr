@@ -59,32 +59,32 @@
     (.-cookie js/document)
     (str cookie-name "=" value)))
 
-(defn input-text-signal [id & [events]] ;; string -> Signal a
-  (let [signal (r/constant #(str (.-value (.getElementById js/document id))) 
-                           #(set! (.-value (.getElementById js/document id)) %) (if (nil? events) [] events))]
+(defn input-text-signal [id & [function args]]
+  (let [signal (r/create-signal function args #(str (.-value (.getElementById js/document id))) 
+                                              #(set! (.-value (.getElementById js/document id)) %))]
     (set! (.-onkeyup 
             (.getElementById js/document id)) 
           #(r/update signal))
     signal))
 
-(defn inner-text-signal [id & [events]] ;; string -> Signal a
-  (let [signal (r/constant #(str (.-innerHTML (.getElementById js/document id))) 
-                           #(set! (.-innerHTML (.getElementById js/document id)) %) (if (nil? events) [] events))]
+(defn inner-text-signal [id & [function args]]
+  (let [signal (r/create-signal function args #(str (.-innerHTML (.getElementById js/document id))) 
+                                              #(set! (.-innerHTML (.getElementById js/document id)) %))]
     signal))
 
-(defn to-input-text [signal id]
-  (r/to-view signal #(set! (.-value (.getElementById js/document id)) %)))
+(defn to-input-text-func [id arg]
+  (set! (.-value (.getElementById js/document id)) arg))
 
-(defn to-inner-text [signal id]
-  (r/to-view signal #(set! (.-innerHTML (.getElementById js/document id)) %)))
+(defn to-inner-text-func [id arg]
+  (set! (.-innerHTML (.getElementById js/document id)) arg))
 
 (defn button-event [id]
   (let [element (.getElementById js/document id)
-        event (r/create-event-stream u/id-func [] [] nil)]
+        event (r/create-event-stream u/id-func [] [])]
     (set!
       (.-onclick element) 
       #(r/propogate-event event true))
     event))
 
-(defn cookie-signal [cookie-name & [events]]
-  (r/to-view (r/create-signal #(get-cookie cookie-name) [] (if (nil? events) [] events)) #(set-cookie cookie-name %)))
+(defn cookie-signal [cookie-name & [function args]]
+  (r/create-signal function args #(get-cookie cookie-name) #(set-cookie cookie-name %)))

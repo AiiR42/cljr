@@ -10,8 +10,8 @@
                       (fn [cookie-value event]
                         cookie-value) 
                       [cookie-value] 
-                      [submit] 
-                      #(wr/set-cookie "simple-cookie" %))
-        simple-cookie (wr/cookie-signal "simple-cookie" [fire-cookie])
-        simple-cookie-text (wr/to-inner-text (r/lift u/id-func [simple-cookie] []) "simple-cookie-text")]
+                      [submit])
+        fired-cookie (r/hold fire-cookie)
+        simple-cookie (wr/cookie-signal "simple-cookie" u/id-func [fired-cookie])
+        simple-cookie-text (wr/inner-text-signal "simple-cookie-text" u/id-func [simple-cookie])]
     nil))

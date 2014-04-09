@@ -8,5 +8,5 @@
 (defn init []
   (let [a (wr/input-text-signal "plus1")
         b (wr/input-text-signal "plus2")
-        result (wr/to-input-text (r/lift plus-function [a b]) "plus-result")]
+        result (r/lift plus-function [a b] nil #(wr/to-input-text-func "plus-result" %))]
     nil))

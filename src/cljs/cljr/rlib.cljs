@@ -1,77 +1,78 @@
 (ns cljr.rlib
   (:require [cljr.util :as u]))
 
-(defn create-signal [function signals events]
+(defn create-signal [function args & [get-func set-func]]
   (let [signal {:function function
-                :args signals
-                :to-view nil
+                :args args
+                :set-func set-func
+                :get-func get-func
                 :relations (atom '())
                 :signal? true}]
-    (add-relations signal events)
+    (add-relations signal args)
     signal))
 
-(defn create-event-stream [function signals events do-func]
+(defn create-event-stream [function signal-args event-args & [do-func]]
   (let [event {:function function
-               :args signals
+               :args signal-args
+               :do do-func
                :relations (atom '())
-               :event-stream? true
-               :do do-func}]
-    (add-relations event events)
+               :event? true}]
+    (add-relations event event-args)
     event)) ;; do - eval on every event
 
-(defn add-relations [signal signals-list] ;; Signal a -> [Signal b] -> nil
+(defn add-relations [signal signals-list]
   ;; Add signal relation to all signals in signals-list
+  ;(js/alert "add-relations")
   (doall (map #(swap! (:relations %) conj signal) 
               signals-list))
+  ;(js/alert signals-list)
   nil)
 
-(defn get-value [cell]
-  (apply (:function cell) (map get-value (:args cell))))
+(defn get-value [signal]
+  ;(js/alert (str "get-value " (:get-func signal)))
+  (if-not (nil? (:function signal))
+    (let [value (apply (:function signal) (map get-value (:args signal)))]
+      (if-not (nil? (:set-func signal))
+        (do (js/alert "set-func: " value) ((:set-func signal) value)))
+      value)
+    (if-not (nil? (:get-func signal))
+      ((:get-func signal)))))
 
-(defn update [cell]
-  (let [value (apply (:function cell) (map get-value (:args cell)))]
-    (if-not (or (nil? value) (nil? (:to-view cell)))
-      ((:to-view cell) value)))
-  (doall (map update @(:relations cell))))
-
-(defn to-view-raw [signal to-view-function]
-  ;; All signal modifications must create new relations atom
-  (assoc signal :to-view to-view-function :relations (atom '())))
+(defn update [signal]
+  (js/alert (get-value signal))
+  (doall (map update @(:relations signal))))
 
 (defn modify [signal apply-func] ;; Signal a -> (Signal a -> Signal a) -> Signal a
-  (let [new-signal (apply-func (create-signal u/id-func [signal] []))]
-    (add-relations new-signal [signal])
-    new-signal))
+  (apply-func (create-signal u/id-func [signal])))
 
-(defn id [signal] ;; Signal a -> Signal a
-  (let [new-signal (lift u/id-func [signal] [])]
-    new-signal))
+(defn id [signal & [get-func set-func]] ;; Signal a -> Signal a
+  (lift u/id-func [signal] get-func set-func))
 
-(defn constant [from-view-func to-view-func events] ;; a -> Signal a
-  (to-view-raw (create-signal from-view-func nil events) to-view-func))
+(defn constant [& [get-func set-func]] ;; a -> Signal a
+  (create-signal nil [] get-func set-func))
 
-(defn lift [func signals & [events]] ;; ([a] -> b) -> [Signal a] -> Signal b
-  (let [signal (create-signal func signals (if (= events nil) [] events))]
-    (add-relations signal signals)
-    signal))
+(defn lift [function args & [get-func set-func]] ;; ([a] -> b) -> [Signal a] -> Signal b
+  (create-signal function args get-func set-func))
 
-(defn to-view [signal to-view-function] ;; Signal a -> (a -> nil) -> Signal a
-  (modify signal #(assoc % :to-view to-view-function)))
+(defn to-view [signal set-func] ;; Signal a -> (a -> nil) -> Signal a
+  (modify signal #(assoc % :set-func set-func)))
 
-(defn event-change [signal event] ;; Signal a -> Event b -> Event a
-  (let [new-signal (create-event-stream u/id-func [signal] [] nil)]
-    (add-relations new-signal [event])
-    new-signal))
+(defn propogate-event [event data]
+  (let [value (apply (:function event) (conj (vec (map get-value (:args event))) data))]
+    (if-not (nil? (:do event))
+      ((:do event) value))
+    (doall 
+      (map 
+        (fn [relation] 
+          (if (:event? relation) 
+            (propogate-event relation value)
+            (update relation))) 
+        @(:relations event)))
+  nil))
 
-(defn propogate-event [event-stream data]
-  (let [value (apply (:function event-stream) (conj (vec (map get-value (:args event-stream))) data))]
-    (if-not (nil? (:do event-stream))
-      ((:do event-stream) value))
-    (doall (map #(if (:event-stream? %) (propogate-event % value) (update %)) @(:relations event-stream))))
-  nil)
-
-(defn event-to-signal [event]
+(defn hold [event]
   (let [cache (atom nil)
-        cache-event (create-event-stream u/id [] [event] #(reset! cache %))
-        signal (create-signal (fn [] @cache) nil [event])]
+        cache-event (create-event-stream u/id-func [] [event] #(reset! cache %))
+        signal (create-signal (fn [] @cache) [])]
+    (add-relations signal [cache-event])
     signal))
