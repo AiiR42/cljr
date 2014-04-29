@@ -1,4 +1,4 @@
-(ns cljr.util)
+(ns cljr.rlib.util)
 
 (defn id-func [a]
   a)

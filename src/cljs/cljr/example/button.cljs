@@ -1,7 +1,7 @@
 (ns cljr.example.button
-  (:require [cljr.rlib :as r]
-            [cljr.webrlib :as wr]
-            [cljr.util :as u]))
+  (:require [cljr.rlib.core :as r]
+            [cljr.rlib.web :as wr]
+            [cljr.rlib.util :as u]))
 
 (defn init []
   (let [a (wr/input-text-signal "login")
